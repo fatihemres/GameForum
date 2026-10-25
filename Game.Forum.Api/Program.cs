@@ -26,6 +26,22 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Secrets are supplied through ASP.NET Core configuration (environment or local user-secrets),
+// never through committed appsettings.json. Fail early with actionable errors.
+var signingKey = builder.Configuration["Jwt:SigningKey"];
+if (string.IsNullOrWhiteSpace(signingKey) || Encoding.UTF8.GetByteCount(signingKey) < 32)
+{
+    throw new InvalidOperationException("Set Jwt:SigningKey to a random secret of at least 32 UTF-8 bytes (e.g. Jwt__SigningKey environment variable).");
+}
+var passwordEncryptionKey = builder.Configuration["AppSettings:SecretKey"];
+if (string.IsNullOrWhiteSpace(passwordEncryptionKey) ||
+    (Encoding.UTF8.GetByteCount(passwordEncryptionKey) != 16 &&
+     Encoding.UTF8.GetByteCount(passwordEncryptionKey) != 24 &&
+     Encoding.UTF8.GetByteCount(passwordEncryptionKey) != 32))
+{
+    throw new InvalidOperationException("Set AppSettings:SecretKey to a secret of exactly 16, 24 or 32 UTF-8 bytes (e.g. AppSettings__SecretKey environment variable).");
+}
+
 //Logging
 var configuration = new ConfigurationBuilder()
         .SetBasePath(Directory.GetCurrentDirectory())
@@ -117,12 +133,12 @@ builder.Services.AddScoped<IVoteCache, VoteCache>();
 //AutoMapper
 builder.Services.AddAutoMapper(typeof(DomainToDto), typeof(ViewModelToDomain));
 
-//FluentValidation, istekte gönderilen modele ait property, istenen formatý destekliyor mu?
+//FluentValidation, istekte gÃ¶nderilen modele ait property, istenen formatÃ½ destekliyor mu?
 builder.Services.AddValidatorsFromAssemblyContaining(typeof(CreateCategoryValidator));
 
 
 
-// JWT kimlik doðrulama servisini ekleme
+// JWT kimlik doÃ°rulama servisini ekleme
 builder.Services.AddAuthentication(opt =>
 {
     opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -137,9 +153,9 @@ builder.Services.AddAuthentication(opt =>
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"], // Tokený oluþturan tarafýn adresi
-            ValidAudience = builder.Configuration["Jwt:Audiance"], // Tokenýn kullanýlacaðý hedef adres
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SigningKey"])) // Gizli anahtar
+            ValidIssuer = builder.Configuration["Jwt:Issuer"], // TokenÃ½ oluÃ¾turan tarafÃ½n adresi
+            ValidAudience = builder.Configuration["Jwt:Audiance"], // TokenÃ½n kullanÃ½lacaÃ°Ã½ hedef adres
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)) // Gizli anahtar
         };
     });
 
