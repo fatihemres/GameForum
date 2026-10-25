@@ -40,4 +40,4 @@ The previous secrets were committed to public Git history: removing their curren
 
 ## License
 
-No license has been selected for this repository. Please obtain the owner's permission before reuse.
+The owner's original materials are **proprietary, all rights reserved**. See [LICENSE](LICENSE). No permission to reuse is granted by public availability, subject to third-party rights and any previously valid licenses.
